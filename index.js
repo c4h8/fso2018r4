@@ -17,8 +17,13 @@ module.exports = Blog;
 app.use(cors());
 app.use(bodyParser.json());
 
-const mongoUrl = 'mongodb://localhost/bloglist';
-mongoose.connect(mongoUrl);
+if ( process.env.NODE_ENV !== 'production' ) {
+  require('dotenv').config();
+}
+
+const url = process.env.MONGODB_URI;
+
+mongoose.connect(url);
 
 app.get('/api/blogs', (request, response) => {
   Blog
