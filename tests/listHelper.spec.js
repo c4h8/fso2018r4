@@ -85,6 +85,7 @@ describe('total likes', () => {
 describe('favoriteBlog', () => {
   test('it should return the blog with most likes', () => {
     const result = listHelper.favoriteBlog(getDummyBlogs());
+
     const expectedResult = {
       _id: '5a422b3a1b54a676234d17f9',
       title: 'Canonical string reduction',
@@ -99,6 +100,42 @@ describe('favoriteBlog', () => {
 
   test('it should return undefined if the blog list is empty', () => {
     const result = listHelper.favoriteBlog([]);
+    expect(result).toBe(undefined);
+  });
+});
+
+describe('mostLikes', () => {
+  test('it should return the author and combined like of the most liked author', () => {
+    const result = listHelper.mostLikes(getDummyBlogs());
+
+    const expectedResult = {
+      author: 'Edsger W. Dijkstra',
+      likes: 17,
+    };
+
+    expect(result).toEqual(expectedResult);
+  });
+
+  test('it should return undefined if the blog list is empty', () => {
+    const result = listHelper.mostLikes([]);
+    expect(result).toBe(undefined);
+  });
+});
+
+describe('mostLikes', () => {
+  test('it should return the name and number of blogs of the most published author', () => {
+    const result = listHelper.mostBlogs(getDummyBlogs());
+
+    const expectedResult = {
+      author: 'Robert C. Martin',
+      blogs: 3
+    };
+
+    expect(result).toEqual(expectedResult);
+  });
+
+  test('it should return undefined if the blog list is empty', () => {
+    const result = listHelper.mostBlogs([]);
     expect(result).toBe(undefined);
   });
 });
