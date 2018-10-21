@@ -1,4 +1,4 @@
-const dummy = (_blogs) => {
+const dummy = () => {
   return 1;
 };
 
