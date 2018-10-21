@@ -2,6 +2,7 @@ const supertest = require('supertest');
 const { app, server } = require('../index');
 const api = supertest(app);
 const Blog = require('../models/blog');
+const { format, blogsInDb } = require('./testHelper');
 
 const testBlogs = [
   {
@@ -29,20 +30,58 @@ beforeAll(async () => {
 });
 
 describe('api tests', () => {
-  test('notes are returned as json', async () => {
-    await api
-      .get('/api/blogs')
-      .expect(200)
-      .expect('Content-Type', /application\/json/);
+
+  describe('api/blogs POST', () => {
+    test('blogs are returned as json', async () => {
+      await api
+        .get('/api/blogs')
+        .expect(200)
+        .expect('Content-Type', /application\/json/);
+    });
+
+    test('there are two blogs', async () => {
+      const res = await api
+        .get('/api/blogs');
+
+      expect(res.body.length).toBe(testBlogs.length);
+    });
   });
 
-  test('there are two notes', async () => {
-    const res = await api
-      .get('/api/blogs');
 
-    expect(res.body.length).toBe(2);
+  describe('api/blogs POST', () => {
+    test('correctly formatted blog is save to the db', async () => {
+      const newBlog = ({
+        title: 'TDD harms architecture',
+        author: 'Robert C. Martin',
+        url: 'http://blog.cleancoder.com/uncle-bob/2017/03/03/TDD-Harms-Architecture.html',
+        likes: 4,
+      });
+
+      await api
+        .post('/api/blogs')
+        .send(newBlog)
+        .expect(201)
+        .expect('Content-Type', /application\/json/);
+
+      const blogsAfter = await blogsInDb();
+
+      expect(blogsAfter.length).toBe(testBlogs.length + 1);
+      expect(blogsAfter).toContainEqual(newBlog);
+    });
+
+    test('blog post missing likes attribute is defaulted to zero', async () => {
+      const res = await api
+        .post('/api/blogs')
+        .send({
+          title: 'cool blog',
+          author: 'blg writer man',
+          url: 'http://blog.blog.com',
+        });
+
+      expect(res.body.likes).toBe(0);
+    });
+
   });
-
 });
 
 afterAll(() => server.close());
