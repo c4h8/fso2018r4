@@ -113,6 +113,42 @@ describe('api tests', () => {
         .expect(400);
     });
   });
+
+  describe('api/blogs PUT', () => {
+    test('posting new blog to api/blogs/id wit PUT updates the existing blog', async () => {
+      const newBlog = ({
+        title: 'TDD harms architecture',
+        author: 'Robert C. Martin',
+        url: 'http://blog.cleancoder.com/uncle-bob/2017/03/03/TDD-Harms-Architecture.html',
+        likes: 4,
+      });
+
+      const updatedBlog = ({
+        title: 'title',
+        author: 'robby c',
+        url: 'blog.com',
+        likes: 23,
+      });
+
+      await Blog.remove({});
+      await api
+        .post('/api/blogs')
+        .send(newBlog);
+
+      const blogs = await Blog.find({});
+
+      await api
+        .put(`/api/blogs/${blogs[0]._id}`)
+        .send(updatedBlog)
+        .expect(204);
+
+      const blogsAfter = await blogsInDb();
+
+      expect(blogs.length).toBe(blogsAfter.length);
+      expect(blogsAfter).not.toContainEqual(newBlog);
+      expect(blogsAfter).toContainEqual(updatedBlog);
+    });
+  });
 });
 
 afterAll(() => server.close());

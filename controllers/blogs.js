@@ -32,4 +32,17 @@ blogsRouter.delete('/:id', async (request, response) => {
   }
 });
 
+blogsRouter.put('/:id', async (request, response) => {
+
+  if (!(request.body.title && request.body.url)) return response.status(400).json({ error: 'missing data' });
+
+  try {
+    await Blog.findByIdAndUpdate(request.params.id, request.body);
+    response.status(204).end();
+  } catch (e) {
+    console.log(e);
+    response.send(400, { error: 'invalid id' });
+  }
+});
+
 module.exports = blogsRouter;
