@@ -31,7 +31,7 @@ beforeAll(async () => {
 
 describe('api tests', () => {
 
-  describe('api/blogs POST', () => {
+  describe('api/blogs GET', () => {
     test('blogs are returned as json', async () => {
       await api
         .get('/api/blogs')
@@ -49,7 +49,7 @@ describe('api tests', () => {
 
 
   describe('api/blogs POST', () => {
-    test('correctly formatted blog is save to the db', async () => {
+    test('correctly formatted blog is saved to the db', async () => {
       const newBlog = ({
         title: 'TDD harms architecture',
         author: 'Robert C. Martin',
@@ -69,6 +69,7 @@ describe('api tests', () => {
       expect(blogsAfter).toContainEqual(newBlog);
     });
 
+
     test('blog post missing likes attribute is defaulted to zero', async () => {
       const res = await api
         .post('/api/blogs')
@@ -79,6 +80,16 @@ describe('api tests', () => {
         });
 
       expect(res.body.likes).toBe(0);
+    });
+
+    test('submitting a blog without name or ulr returns 400 status', async () => {
+      const res = await api
+        .post('/api/blogs')
+        .send({
+          author: 'blg writer man',
+          likes: '3'
+        })
+        .expect(400);
     });
 
   });
