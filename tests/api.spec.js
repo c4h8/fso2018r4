@@ -2,22 +2,7 @@ const supertest = require('supertest');
 const { app, server } = require('../index');
 const api = supertest(app);
 const Blog = require('../models/blog');
-const { format, blogsInDb } = require('./testHelper');
-
-const testBlogs = [
-  {
-    title: 'React patterns',
-    author: 'Michael Chan',
-    url: 'https://reactpatterns.com/',
-    likes: 7,
-  },
-  {
-    title: 'Go To Statement Considered Harmful',
-    author: 'Edsger W. Dijkstra',
-    url: 'http://www.u.arizona.edu/~rubinson/copyright_violations/Go_To_Considered_Harmful.html',
-    likes: 5,
-  }
-];
+const { blogsInDb, testBlogs } = require('./testHelper');
 
 beforeAll(async () => {
   await Blog.remove({});
@@ -40,10 +25,11 @@ describe('api tests', () => {
     });
 
     test('there are two blogs', async () => {
+      const blogsBefore = await blogsInDb();
       const res = await api
         .get('/api/blogs');
 
-      expect(res.body.length).toBe(testBlogs.length);
+      expect(res.body.length).toBe(blogsBefore.length);
     });
   });
 
@@ -57,6 +43,8 @@ describe('api tests', () => {
         likes: 4,
       });
 
+      const blogsBefore = await blogsInDb();
+
       await api
         .post('/api/blogs')
         .send(newBlog)
@@ -65,12 +53,12 @@ describe('api tests', () => {
 
       const blogsAfter = await blogsInDb();
 
-      expect(blogsAfter.length).toBe(testBlogs.length + 1);
+      expect(blogsAfter.length).toBe(blogsBefore.length + 1);
       expect(blogsAfter).toContainEqual(newBlog);
     });
 
 
-    test('blog post missing likes attribute is defaulted to zero', async () => {
+    test('posting a blog missing likes attribute is defaulted to zero likes', async () => {
       const res = await api
         .post('/api/blogs')
         .send({
@@ -83,7 +71,7 @@ describe('api tests', () => {
     });
 
     test('submitting a blog without name or ulr returns 400 status', async () => {
-      const res = await api
+      await api
         .post('/api/blogs')
         .send({
           author: 'blg writer man',
@@ -91,7 +79,39 @@ describe('api tests', () => {
         })
         .expect(400);
     });
+  });
 
+  describe('api/blogs DELETE', () => {
+    test('deleting a blog by id deletes the blog', async () => {
+      const newBlog = ({
+        title: 'TDD harms architecture',
+        author: 'Robert C. Martin',
+        url: 'http://blog.cleancoder.com/uncle-bob/2017/03/03/TDD-Harms-Architecture.html',
+        likes: 4,
+      });
+
+      await Blog.remove({});
+      await api
+        .post('/api/blogs')
+        .send(newBlog);
+
+      const blogs = await Blog.find({});
+
+      await api
+        .delete(`/api/blogs/${blogs[0]._id}`)
+        .expect(204);
+
+      const blogsAfter = await blogsInDb();
+
+      expect(blogs.length).toBe(blogsAfter.length + 1);
+      expect(blogsAfter).not.toContainEqual(newBlog);
+    });
+
+    test('should return 400 when using an invalid id', async () => {
+      await api
+        .delete('/api/blogs/aTotallyFakeId')
+        .expect(400);
+    });
   });
 });
 
