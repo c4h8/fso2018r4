@@ -9,6 +9,14 @@ beforeAll(async () => {
   await Blog.remove({});
   await User.remove({});
 
+  const rootUser = new User({
+    username: 'root',
+    name: 'root',
+    password: 'root',
+  });
+
+  await rootUser.save();
+
   const testBlogPromises = testBlogs
     .map(blog => new Blog(blog))
     .map(blog => blog.save());
