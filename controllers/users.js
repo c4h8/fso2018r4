@@ -8,9 +8,11 @@ usersRouter.post('/', async (request, response) => {
   try {
     const body = request.body;
 
-    console.log('hashsing...');
+    if(body.password.length < 3) return response
+      .status(400)
+      .json({ error: 'password must be over 2 characters' });
+
     const passwordHash = await bcrypt.hash(body.password, saltRounds);
-    console.log('done hashsing!');
 
     const user = new User({
       username: body.username,

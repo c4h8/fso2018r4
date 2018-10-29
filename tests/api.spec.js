@@ -184,6 +184,27 @@ describe('user api tests', () => {
 
       expect(usersAfter.length).toBe(usersBefore.length + 1);
     });
+
+    test('should reject creating a user with password shorter than 3 charactes', async () => {
+      const newUser = ({
+        username: 'iHatePasswords',
+        name: 'P. W. Hatington',
+        password: 'pw',
+        adult: true
+      });
+
+      const usersBefore = await usersInDb();
+
+      const res = await api
+        .post('/api/users')
+        .send(newUser)
+        .expect(400);
+
+      const usersAfter = await usersInDb();
+
+      expect(usersAfter.length).toBe(usersBefore.length);
+      expect(res.body.error).toBe('password must be over 2 characters');
+    });
   });
 });
 
