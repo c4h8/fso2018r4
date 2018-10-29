@@ -1,4 +1,5 @@
 const Blog = require('../models/blog');
+const User = require('../models/user');
 
 const format = blog => ({
   title: blog.title,
@@ -10,6 +11,11 @@ const format = blog => ({
 const blogsInDb = async () => {
   const blogs = await Blog.find({});
   return blogs.map(format);
+};
+
+const usersInDb = async () => {
+  const users = await User.find({});
+  return users;
 };
 
 const testBlogs = [
@@ -28,5 +34,5 @@ const testBlogs = [
 ];
 
 module.exports = {
-  format, blogsInDb, testBlogs
+  format, blogsInDb, testBlogs, usersInDb
 };

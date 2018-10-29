@@ -2,10 +2,12 @@ const supertest = require('supertest');
 const { app, server } = require('../index');
 const api = supertest(app);
 const Blog = require('../models/blog');
-const { blogsInDb, testBlogs } = require('./testHelper');
+const User = require('../models/user');
+const { blogsInDb, testBlogs, usersInDb } = require('./testHelper');
 
 beforeAll(async () => {
   await Blog.remove({});
+  await User.remove({});
 
   const testBlogPromises = testBlogs
     .map(blog => new Blog(blog))
@@ -15,7 +17,6 @@ beforeAll(async () => {
 });
 
 describe('api tests', () => {
-
   describe('api/blogs GET', () => {
     test('blogs are returned as json', async () => {
       await api
@@ -147,6 +148,41 @@ describe('api tests', () => {
       expect(blogs.length).toBe(blogsAfter.length);
       expect(blogsAfter).not.toContainEqual(newBlog);
       expect(blogsAfter).toContainEqual(updatedBlog);
+    });
+  });
+});
+
+
+describe('user api tests', () => {
+  describe('api/users GET', () => {
+    test('return a list of users as json', async () => {
+      await api
+        .get('/api/users')
+        .expect(200)
+        .expect('Content-Type', /application\/json/);
+    });
+  });
+
+  describe('api/users POST', () => {
+    test('should create a new users when correct data is sent', async () => {
+      const newUser = ({
+        username: 'gmguy',
+        name: 'Guy Man',
+        password: 'sekred',
+        adult: true
+      });
+
+      const usersBefore = await usersInDb();
+
+      await api
+        .post('/api/users')
+        .send(newUser)
+        .expect(201)
+        .expect('Content-Type', /application\/json/);
+
+      const usersAfter = await usersInDb();
+
+      expect(usersAfter.length).toBe(usersBefore.length + 1);
     });
   });
 });
