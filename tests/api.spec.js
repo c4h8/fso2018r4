@@ -172,7 +172,7 @@ describe('user api tests', () => {
   });
 
   describe('api/users POST', () => {
-    test('should create a new user when correct data is sent', async () => {
+    test('should create a new user when valid data is sent', async () => {
       const newUser = ({
         username: 'gmguy',
         name: 'Guy Man',
@@ -213,6 +213,37 @@ describe('user api tests', () => {
       expect(usersAfter.length).toBe(usersBefore.length);
       expect(res.body.error).toBe('password must be over 2 characters');
     });
+  });
+});
+
+describe('login api tests', () => {
+  const rootUser = ({
+    username: 'rootUser',
+    name: 'root',
+    password: 'rootPw',
+  });
+
+  beforeAll(async () => {
+    await Blog.remove({});
+    await User.remove({});
+
+    await api
+      .post('/api/users')
+      .send(rootUser);
+  });
+
+  test('should return a token when using valid pw and name for an existing user', async () => {
+    await api
+      .post('/api/login')
+      .send({ username: rootUser.username, password: rootUser.password })
+      .expect(200);
+  });
+
+  test('should return 400 with invalid password', async () => {
+    await api
+      .post('/api/login')
+      .send({ username: rootUser.username, password: 'wrong password' })
+      .expect(401);
   });
 });
 
