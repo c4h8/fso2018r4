@@ -172,7 +172,7 @@ describe('user api tests', () => {
   });
 
   describe('api/users POST', () => {
-    test('should create a new users when correct data is sent', async () => {
+    test('should create a new user when correct data is sent', async () => {
       const newUser = ({
         username: 'gmguy',
         name: 'Guy Man',
