@@ -145,7 +145,6 @@ describe('api tests', () => {
         .send(newBlog);
 
       const blogs = await Blog.find({});
-      console.log('BLOGS IN DB', blogs);
 
       await api
         .delete(`/api/blogs/${blogs[0]._id}`)
