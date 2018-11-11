@@ -12,7 +12,9 @@ usersRouter.post('/', async (request, response) => {
       .status(400)
       .json({ error: 'password must be over 2 characters' });
 
-    const userExists = await User.find({ username: body.username });
+    const userExists = await User.findOne({ username: body.username });
+
+    console.log('user found', userExists);
 
     if(userExists) return response
       .status(400)
@@ -29,7 +31,7 @@ usersRouter.post('/', async (request, response) => {
 
     const savedUser = await user.save();
 
-    response.status(201).json(savedUser);
+    response.status(201).json(User.format(savedUser));
   } catch (exception) {
     console.log(exception);
     response.status(500).json({ error: 'something went wrong...' });
