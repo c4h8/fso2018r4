@@ -3,18 +3,28 @@ const { app, server } = require('../index');
 const api = supertest(app);
 const Blog = require('../models/blog');
 const User = require('../models/user');
-const { blogsInDb, testBlogs, usersInDb } = require('./testHelper');
+const { blogsInDb, testBlogs, usersInDb, generateAuthHeader } = require('./testHelper');
 
+const loginUser = async (username, password) => {
+  const res = await api
+    .post('/api/login')
+    .send({ username, password });
+
+  return res;
+};
+
+const rootUserData = ({
+  adult: true,
+  username: 'root',
+  name: 'root',
+  passwordHash: '$2a$10$2CJiEKW5bl433Tg3QsNLXe6CXvQuKnAuahNHJJBd4on9UECE4QwSa',
+});
 
 beforeAll(async () => {
   await Blog.remove({});
   await User.remove({});
 
-  const rootUser = new User({
-    username: 'root',
-    name: 'root',
-    password: 'root',
-  });
+  const rootUser = new User(rootUserData);
 
   await rootUser.save();
 
@@ -55,9 +65,11 @@ describe('api tests', () => {
       });
 
       const blogsBefore = await blogsInDb();
+      const userData = await loginUser('root', 'root');
 
       await api
         .post('/api/blogs')
+        .set('Authorization', generateAuthHeader(userData.body.token))
         .send(newBlog)
         .expect(201)
         .expect('Content-Type', /application\/json/);
@@ -70,8 +82,11 @@ describe('api tests', () => {
 
 
     test('posting a blog missing likes attribute is defaulted to zero likes', async () => {
+      const userData = await loginUser('root', 'root');
+
       const res = await api
         .post('/api/blogs')
+        .set('Authorization', generateAuthHeader(userData.body.token))
         .send({
           title: 'cool blog',
           author: 'blg writer man',
@@ -82,13 +97,34 @@ describe('api tests', () => {
     });
 
     test('submitting a blog without name or ulr returns 400 status', async () => {
+      const userData = await loginUser('root', 'root');
+
       await api
         .post('/api/blogs')
+        .set('Authorization', generateAuthHeader(userData.body.token))
         .send({
           author: 'blg writer man',
           likes: '3'
         })
         .expect(400);
+    });
+
+    test('correctly formatted blog cant be submitted without a token', async () => {
+      const blogsBefore = await blogsInDb();
+
+      await api
+        .post('/api/blogs')
+        .send({
+          title: 'TDD harms architecture2',
+          author: 'Robert C. Martin2',
+          url: 'http://blog.cleancoder.com/uncle-bob/2017/03/03/TDD-Harms-Architecture.html2',
+          likes: 4,
+        })
+        .expect(400);
+
+      const blogsAfter = await blogsInDb();
+
+      expect(blogsAfter.length).toBe(blogsBefore.length);
     });
   });
 

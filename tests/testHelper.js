@@ -18,6 +18,8 @@ const usersInDb = async () => {
   return users;
 };
 
+const generateAuthHeader = token => `bearer ${token}`;
+
 const testBlogs = [
   {
     title: 'React patterns',
@@ -34,5 +36,5 @@ const testBlogs = [
 ];
 
 module.exports = {
-  format, blogsInDb, testBlogs, usersInDb
+  format, blogsInDb, testBlogs, usersInDb, generateAuthHeader
 };
