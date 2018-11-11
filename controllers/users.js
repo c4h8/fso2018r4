@@ -12,6 +12,12 @@ usersRouter.post('/', async (request, response) => {
       .status(400)
       .json({ error: 'password must be over 2 characters' });
 
+    const userExists = await User.find({ username: body.username });
+
+    if(userExists) return response
+      .status(400)
+      .json({ error: 'username already exists' });
+
     const passwordHash = await bcrypt.hash(body.password, saltRounds);
 
     const user = new User({

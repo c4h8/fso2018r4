@@ -5,6 +5,7 @@ const Blog = require('../models/blog');
 const User = require('../models/user');
 const { blogsInDb, testBlogs, usersInDb } = require('./testHelper');
 
+
 beforeAll(async () => {
   await Blog.remove({});
   await User.remove({});
@@ -23,6 +24,7 @@ beforeAll(async () => {
 
   await Promise.all(testBlogPromises);
 });
+
 
 describe('api tests', () => {
   describe('api/blogs GET', () => {
@@ -216,6 +218,7 @@ describe('user api tests', () => {
   });
 });
 
+
 describe('login api tests', () => {
   const rootUser = ({
     username: 'rootUser',
@@ -232,18 +235,20 @@ describe('login api tests', () => {
       .send(rootUser);
   });
 
-  test('should return a token when using valid pw and name for an existing user', async () => {
-    await api
-      .post('/api/login')
-      .send({ username: rootUser.username, password: rootUser.password })
-      .expect(200);
-  });
+  describe('api/login POST', () => {
+    test('should return a token when using valid pw and name for an existing user', async () => {
+      await api
+        .post('/api/login')
+        .send({ username: rootUser.username, password: rootUser.password })
+        .expect(200);
+    });
 
-  test('should return 400 with invalid password', async () => {
-    await api
-      .post('/api/login')
-      .send({ username: rootUser.username, password: 'wrong password' })
-      .expect(401);
+    test('should return 400 with invalid password', async () => {
+      await api
+        .post('/api/login')
+        .send({ username: rootUser.username, password: 'wrong password' })
+        .expect(401);
+    });
   });
 });
 
