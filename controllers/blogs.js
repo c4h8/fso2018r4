@@ -2,6 +2,7 @@ const blogsRouter = require('express').Router();
 const jwt = require('jsonwebtoken');
 const Blog = require('../models/blog');
 const User = require('../models/user');
+const getUserFromToken = require('../utils/getUserFromToken');
 
 blogsRouter.get('/', async (request, response) => {
   try {
@@ -21,13 +22,9 @@ blogsRouter.post('/', async (request, response) => {
   if (!(request.body.title && request.body.url)) return response.status(400).json({ error: 'missing data' });
 
   try {
-    const decodedToken = jwt.verify(request.token, process.env.SECRET);
+    const { authenticatedUser, error } = await getUserFromToken(request);
 
-    if (!request.token || !decodedToken.id) {
-      return response.status(401).json({ error: 'token missing or invalid' });
-    }
-
-    const authenticatedUser = await User.findOne({ _id: decodedToken.id });
+    if(error) return response.status(400).json({ error });
 
     const blog = new Blog({ ...request.body, user: authenticatedUser._id });
     const savedBlog = await blog.save();
@@ -39,9 +36,6 @@ blogsRouter.post('/', async (request, response) => {
     response.status(201).json(savedBlog);
 
   } catch (e) {
-    if(e.message === 'invalid signature') {
-      return response.status(401).json({ error: 'token missing or invalid' });
-    }
     console.log(e);
     response.send(400, { error: 'something went wrong' });
   }
@@ -49,8 +43,20 @@ blogsRouter.post('/', async (request, response) => {
 
 blogsRouter.delete('/:id', async (request, response) => {
   try {
-    await Blog.findByIdAndRemove(request.params.id);
-    response.status(204).end();
+    const { authenticatedUser, error } = await getUserFromToken(request);
+
+    if(error) return response.status(400).json({ error });
+
+    const blog = await Blog
+      .findById(request.params.id)
+      .populate('user', { username: 1, name: 1 });
+
+    if(blog.user._id.toString() === authenticatedUser._id.toString()) {
+      await Blog.findByIdAndRemove(request.params.id);
+      return response.status(204).end();
+    }
+
+    response.send(401, { error: 'not authorized' });
   } catch (e) {
     console.log(e);
     response.send(400, { error: 'invalid id' });

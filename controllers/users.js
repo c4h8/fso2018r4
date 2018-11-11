@@ -14,8 +14,6 @@ usersRouter.post('/', async (request, response) => {
 
     const userExists = await User.findOne({ username: body.username });
 
-    console.log('user found', userExists);
-
     if(userExists) return response
       .status(400)
       .json({ error: 'username already exists' });

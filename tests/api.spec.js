@@ -129,7 +129,7 @@ describe('api tests', () => {
   });
 
   describe('api/blogs DELETE', () => {
-    test('deleting a blog by id deletes the blog', async () => {
+    test('deleting a blog by id as it deletes the blog', async () => {
       const newBlog = ({
         title: 'TDD harms architecture',
         author: 'Robert C. Martin',
@@ -138,14 +138,18 @@ describe('api tests', () => {
       });
 
       await Blog.remove({});
+      const userData = await loginUser('root', 'root');
       await api
         .post('/api/blogs')
+        .set('Authorization', generateAuthHeader(userData.body.token))
         .send(newBlog);
 
       const blogs = await Blog.find({});
+      console.log('BLOGS IN DB', blogs);
 
       await api
         .delete(`/api/blogs/${blogs[0]._id}`)
+        .set('Authorization', generateAuthHeader(userData.body.token))
         .expect(204);
 
       const blogsAfter = await blogsInDb();
@@ -155,8 +159,11 @@ describe('api tests', () => {
     });
 
     test('should return 400 when using an invalid id', async () => {
+      const userData = await loginUser('root', 'root');
+
       await api
         .delete('/api/blogs/aTotallyFakeId')
+        .set('Authorization', generateAuthHeader(userData.body.token))
         .expect(400);
     });
   });
@@ -178,8 +185,10 @@ describe('api tests', () => {
       });
 
       await Blog.remove({});
+      const userData = await loginUser('root', 'root');
       await api
         .post('/api/blogs')
+        .set('Authorization', generateAuthHeader(userData.body.token))
         .send(newBlog);
 
       const blogs = await Blog.find({});
