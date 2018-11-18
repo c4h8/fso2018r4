@@ -1,17 +1,18 @@
 const supertest = require('supertest');
+const jwt = require('jsonwebtoken');
 const { app, server } = require('../index');
 const api = supertest(app);
 const Blog = require('../models/blog');
 const User = require('../models/user');
 const { blogsInDb, testBlogs, usersInDb, generateAuthHeader } = require('./testHelper');
 
-const loginUser = async (username, password) => {
-  const res = await api
-    .post('/api/login')
-    .send({ username, password });
+// const loginUser = async (username, password) => {
+//   const res = await api
+//     .post('/api/login')
+//     .send({ username, password });
 
-  return res;
-};
+//   return res;
+// };
 
 const rootUserData = ({
   adult: true,
@@ -20,6 +21,8 @@ const rootUserData = ({
   passwordHash: '$2a$10$2CJiEKW5bl433Tg3QsNLXe6CXvQuKnAuahNHJJBd4on9UECE4QwSa',
 });
 
+let rootToken = undefined;
+
 beforeAll(async () => {
   await Blog.remove({});
   await User.remove({});
@@ -27,6 +30,16 @@ beforeAll(async () => {
   const rootUser = new User(rootUserData);
 
   await rootUser.save();
+
+  const rootUserInDb = await User.findOne({ username: 'root' });
+
+  rootToken = generateAuthHeader(jwt.sign(
+    {
+      username: rootUserInDb.username,
+      id: rootUserInDb._id
+    },
+    process.env.SECRET
+  ));
 
   const testBlogPromises = testBlogs
     .map(blog => new Blog(blog))
@@ -65,11 +78,10 @@ describe('api tests', () => {
       });
 
       const blogsBefore = await blogsInDb();
-      const userData = await loginUser('root', 'root');
 
       await api
         .post('/api/blogs')
-        .set('Authorization', generateAuthHeader(userData.body.token))
+        .set('Authorization', rootToken)
         .send(newBlog)
         .expect(201)
         .expect('Content-Type', /application\/json/);
@@ -82,11 +94,9 @@ describe('api tests', () => {
 
 
     test('posting a blog missing likes attribute is defaulted to zero likes', async () => {
-      const userData = await loginUser('root', 'root');
-
       const res = await api
         .post('/api/blogs')
-        .set('Authorization', generateAuthHeader(userData.body.token))
+        .set('Authorization', rootToken)
         .send({
           title: 'cool blog',
           author: 'blg writer man',
@@ -97,11 +107,9 @@ describe('api tests', () => {
     });
 
     test('submitting a blog without name or ulr returns 400 status', async () => {
-      const userData = await loginUser('root', 'root');
-
       await api
         .post('/api/blogs')
-        .set('Authorization', generateAuthHeader(userData.body.token))
+        .set('Authorization', rootToken)
         .send({
           author: 'blg writer man',
           likes: '3'
@@ -138,17 +146,17 @@ describe('api tests', () => {
       });
 
       await Blog.remove({});
-      const userData = await loginUser('root', 'root');
+
       await api
         .post('/api/blogs')
-        .set('Authorization', generateAuthHeader(userData.body.token))
+        .set('Authorization', rootToken)
         .send(newBlog);
 
       const blogs = await Blog.find({});
 
       await api
         .delete(`/api/blogs/${blogs[0]._id}`)
-        .set('Authorization', generateAuthHeader(userData.body.token))
+        .set('Authorization', rootToken)
         .expect(204);
 
       const blogsAfter = await blogsInDb();
@@ -158,11 +166,9 @@ describe('api tests', () => {
     });
 
     test('should return 400 when using an invalid id', async () => {
-      const userData = await loginUser('root', 'root');
-
       await api
         .delete('/api/blogs/aTotallyFakeId')
-        .set('Authorization', generateAuthHeader(userData.body.token))
+        .set('Authorization', rootToken)
         .expect(400);
     });
   });
@@ -184,10 +190,10 @@ describe('api tests', () => {
       });
 
       await Blog.remove({});
-      const userData = await loginUser('root', 'root');
+
       await api
         .post('/api/blogs')
-        .set('Authorization', generateAuthHeader(userData.body.token))
+        .set('Authorization', rootToken)
         .send(newBlog);
 
       const blogs = await Blog.find({});
